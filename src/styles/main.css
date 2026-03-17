@@ -488,3 +488,80 @@ body::before {
 }
 .wr-btn-open:hover { background: #cc0000; }
 .wr-note { font-size: .55rem; color: #222; line-height: 1.8; letter-spacing: .06em; }
+
+/* ══ HEADER AUTH ═════════════════════════════════════════════ */
+.hdr-user { display: flex; align-items: center; gap: .5rem; }
+.hdr-pseudo { font-size: .6rem; color: #444; letter-spacing: .08em; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hdr-admin-tag { font-size: .48rem; background: var(--red); color: #fff; padding: 2px 5px; letter-spacing: .1em; }
+.hdr-logout { background: transparent; border: 1px solid #1e1e1e; color: #333; font-family: inherit; font-size: .55rem; padding: 4px 8px; cursor: pointer; letter-spacing: .06em; text-transform: uppercase; transition: all .15s; }
+.hdr-logout:hover { border-color: var(--red); color: var(--red); }
+.hdr-login-btn { background: var(--gold); color: #000; border: none; font-family: inherit; font-size: .6rem; font-weight: 700; padding: 6px 12px; cursor: pointer; letter-spacing: .06em; text-transform: uppercase; transition: background .15s; }
+.hdr-login-btn:hover { background: #fff; }
+
+/* ══ AUTH MODAL ══════════════════════════════════════════════ */
+#auth-modal { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 8000; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(6px); }
+#auth-modal.open { display: flex; }
+
+.am-box { background: #090909; border: 1px solid var(--border); width: 100%; max-width: 420px; padding: 0; position: relative; animation: fadeUp .22s ease; }
+.am-close { position: absolute; top: .8rem; right: .8rem; background: none; border: none; color: #333; font-size: 1rem; cursor: pointer; font-family: inherit; z-index: 1; }
+.am-close:hover { color: var(--white); }
+
+.am-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.am-tab { flex: 1; padding: .9rem; text-align: center; font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: #2a2a2a; cursor: pointer; transition: all .15s; border-bottom: 2px solid transparent; }
+.am-tab:hover { color: #555; }
+.am-tab.on { color: var(--gold); border-bottom-color: var(--gold); }
+
+.am-panel { display: none; padding: 1.5rem; }
+.am-panel.on { display: block; }
+
+.am-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--white); letter-spacing: .04em; margin-bottom: .2rem; }
+.am-sub { font-size: .6rem; color: #333; letter-spacing: .08em; margin-bottom: 1.3rem; }
+
+.am-field { margin-bottom: .8rem; }
+.am-field label { display: block; font-size: .5rem; letter-spacing: .14em; color: #2a2a2a; text-transform: uppercase; margin-bottom: .3rem; }
+.am-field input { width: 100%; background: #080808; border: 1px solid #161616; color: var(--white); font-family: inherit; font-size: .8rem; padding: 10px 12px; outline: none; }
+.am-field input:focus { border-color: var(--gold); }
+
+.am-btn { width: 100%; background: var(--gold); color: #000; border: none; font-family: inherit; font-size: .78rem; font-weight: 700; padding: 13px; cursor: pointer; letter-spacing: .07em; text-transform: uppercase; margin-top: .5rem; transition: background .15s; }
+.am-btn:hover { background: #fff; }
+.am-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.am-switch { text-align: center; margin-top: 1rem; font-size: .58rem; color: #2a2a2a; }
+.am-switch span { color: var(--gold); cursor: pointer; text-decoration: underline; }
+
+/* ══ ADMIN SCREEN ════════════════════════════════════════════ */
+#screen-admin { max-width: 1100px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+.admin-header { padding: 2rem 0 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.admin-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: .04em; color: var(--white); }
+.admin-sub { font-size: .6rem; color: #333; letter-spacing: .1em; }
+.admin-logout { background: transparent; border: 1px solid var(--border); color: #333; font-family: inherit; font-size: .6rem; padding: 7px 14px; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; transition: all .15s; }
+.admin-logout:hover { border-color: var(--red); color: var(--red); }
+
+.admin-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .5rem; margin-bottom: 2rem; }
+.kpi { background: var(--dim); border: 1px solid var(--border); padding: 1rem; text-align: center; }
+.kpi-n { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gold); line-height: 1; }
+.kpi-l { font-size: .52rem; color: #2a2a2a; letter-spacing: .12em; text-transform: uppercase; margin-top: .2rem; }
+
+.admin-section { margin-bottom: 2.5rem; }
+.admin-section-title { font-size: .58rem; letter-spacing: .18em; color: #2a2a2a; text-transform: uppercase; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border); }
+
+.admin-round-info { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.ari-item {}
+.ari-label { font-size: .5rem; letter-spacing: .14em; color: #222; text-transform: uppercase; margin-bottom: .2rem; }
+.ari-val { font-size: .75rem; color: var(--white); }
+
+.admin-note { font-size: .58rem; color: #2a2a2a; line-height: 1.8; }
+.admin-note code { color: var(--gold); background: #0a0a0a; padding: 1px 5px; }
+
+.admin-table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: .6rem; }
+.admin-table th { text-align: left; padding: .6rem .8rem; font-size: .5rem; letter-spacing: .12em; color: #2a2a2a; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.admin-table td { padding: .7rem .8rem; border-bottom: 1px solid #0d0d0d; color: #555; vertical-align: top; }
+.admin-table td strong { color: var(--white); }
+.admin-table td small { font-size: .52rem; color: #2a2a2a; }
+.admin-table td a { color: var(--gold); text-decoration: none; }
+.admin-table tr:hover td { background: #0a0a0a; }
+
+.admin-del-btn { background: transparent; border: 1px solid #1a1a1a; color: #2a2a2a; font-family: inherit; font-size: .5rem; padding: 3px 7px; cursor: pointer; letter-spacing: .06em; transition: all .15s; }
+.admin-del-btn:hover { border-color: var(--red); color: var(--red); }
