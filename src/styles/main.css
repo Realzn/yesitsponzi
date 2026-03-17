@@ -341,3 +341,150 @@ body::before {
 
 /* ══ FOOTER ══════════════════════════════════════════════════ */
 .site-footer { padding: .95rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem; font-size: .5rem; color: #181818; letter-spacing: .1em; }
+
+/* ══ WAR ROOM ════════════════════════════════════════════════ */
+#war-room {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: #080808;
+}
+
+.wr-header {
+  padding: 2.5rem 1.5rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.wr-eyebrow {
+  font-size: .55rem; letter-spacing: .22em;
+  color: var(--red); text-transform: uppercase;
+  margin-bottom: .5rem; animation: blink 2s step-end infinite;
+}
+.wr-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  letter-spacing: .04em; line-height: 1.1; margin-bottom: .4rem;
+}
+.wr-title span { color: var(--gold); }
+.wr-sub { font-size: .65rem; color: #333; line-height: 1.9; }
+
+.wr-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 680px) { .wr-body { grid-template-columns: 1fr; } }
+
+/* Chart col */
+.wr-chart-col {
+  padding: 1.5rem;
+  border-right: 1px solid var(--border);
+}
+@media (max-width: 680px) { .wr-chart-col { border-right: none; border-bottom: 1px solid var(--border); } }
+.wr-col-label {
+  font-size: .5rem; letter-spacing: .18em;
+  color: #2a2a2a; text-transform: uppercase; margin-bottom: 1rem;
+}
+#wr-chart { display: flex; flex-direction: column; gap: .5rem; }
+.wr-empty { font-size: .6rem; color: #1e1e1e; padding: 1rem 0; }
+
+.wr-bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  gap: .5rem;
+  align-items: center;
+}
+.wr-bar-lbl {
+  font-size: .58rem; color: #333; letter-spacing: .06em;
+  display: flex; align-items: center; gap: .35rem;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.wr-bar-lbl.top  { color: var(--gold); }
+.wr-bar-lbl.me   { color: var(--white); }
+.wr-bar-lbl em   { font-style: normal; font-size: .48rem; color: var(--green); background: rgba(0,255,136,.08); padding: 1px 4px; }
+.wr-bar-track    { height: 18px; background: #0d0d0d; border: 1px solid #141414; overflow: hidden; }
+.wr-bar-fill     { height: 100%; background: #2a2a2a; transition: width .5s ease; }
+.wr-bar-fill.top { background: linear-gradient(90deg, #3a2800, var(--gold)); }
+.wr-bar-fill.mine{ background: linear-gradient(90deg, #003a1a, var(--green)); }
+.wr-bar-meta     { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: .1rem; }
+.wr-bar-meta span{ font-size: .65rem; color: var(--white); font-family: 'Bebas Neue', sans-serif; }
+.wr-bar-meta small{ font-size: .48rem; color: #2a2a2a; letter-spacing: .08em; }
+.wr-chart-foot   {
+  display: flex; align-items: center; gap: .6rem;
+  margin-top: 1rem; font-size: .55rem; color: #222; letter-spacing: .1em;
+}
+.wr-sep { color: #1e1e1e; }
+
+/* Alert col */
+.wr-alert-col { padding: 1.5rem; display: flex; align-items: flex-start; }
+.wr-alert-box {
+  background: #0c0800;
+  border: 1px solid #2a1800;
+  padding: 1.2rem;
+  width: 100%;
+  transition: border-color .3s;
+}
+.wr-alert-box.danger { border-color: var(--red); animation: pulse 1s ease-in-out infinite; }
+.wr-alert-icon  { font-size: 1.5rem; margin-bottom: .5rem; }
+.wr-alert-tag   { font-size: .5rem; letter-spacing: .18em; color: #3a2800; text-transform: uppercase; margin-bottom: .4rem; }
+.wr-alert-name  { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--gold); letter-spacing: .04em; line-height: 1; margin-bottom: .7rem; }
+.wr-alert-stats { display: flex; gap: 1rem; margin-bottom: .8rem; }
+.wr-astat       { display: flex; flex-direction: column; align-items: center; }
+.wr-astat span  { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--white); line-height: 1; }
+.wr-astat small { font-size: .48rem; color: #333; letter-spacing: .1em; text-transform: uppercase; }
+.wr-alert-bar   { height: 2px; background: #1a1a1a; margin-bottom: .8rem; overflow: hidden; }
+.wr-alert-fill  { height: 100%; background: var(--gold); transition: width .6s ease; }
+.wr-alert-msg   { font-size: .62rem; color: #3a2800; line-height: 1.7; }
+
+/* Share section */
+.wr-share {
+  padding: 2rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.wr-share-head  { margin-bottom: 1.5rem; }
+.wr-share-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  letter-spacing: .04em; margin-bottom: .4rem;
+  color: var(--red);
+}
+.wr-share-sub { font-size: .63rem; color: #333; line-height: 1.9; }
+
+.wr-nets {
+  display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1.2rem;
+}
+.wr-net {
+  background: transparent; border: 1px solid #1a1a1a;
+  color: #2a2a2a; padding: .45rem .85rem;
+  font-size: .6rem; letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer; transition: all .15s; user-select: none;
+}
+.wr-net:hover { border-color: #3a3a3a; color: #555; }
+.wr-net.on    { border-color: var(--gold); color: var(--gold); background: rgba(255,226,52,.04); }
+
+.wr-msg-wrap { margin-bottom: 1rem; }
+.wr-msg-box  {
+  background: #0a0a0a; border: 1px solid #1a1a1a;
+  padding: 1rem; font-size: .68rem; color: #555;
+  line-height: 1.9; white-space: pre-wrap;
+  word-break: break-word; min-height: 120px;
+  margin-bottom: .6rem;
+}
+.wr-msg-btns { display: flex; gap: .4rem; flex-wrap: wrap; }
+.wr-btn-copy {
+  background: transparent; border: 1px solid var(--border);
+  color: #444; font-family: inherit; font-size: .68rem;
+  padding: 10px 16px; cursor: pointer;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: all .15s;
+}
+.wr-btn-copy:hover { border-color: var(--gold); color: var(--gold); }
+.wr-btn-open {
+  flex: 1; background: var(--red); color: #fff; border: none;
+  font-family: inherit; font-size: .72rem; font-weight: 700;
+  padding: 10px 20px; cursor: pointer;
+  letter-spacing: .07em; text-transform: uppercase;
+  transition: background .15s;
+}
+.wr-btn-open:hover { background: #cc0000; }
+.wr-note { font-size: .55rem; color: #222; line-height: 1.8; letter-spacing: .06em; }

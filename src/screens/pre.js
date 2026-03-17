@@ -1,6 +1,7 @@
 import { Waitlist } from '../lib/supabase.js'
 import { toast } from '../lib/utils.js'
 import { formatCountdown, startTimer } from '../components/timer.js'
+import { renderWarRoom, initWarRoom } from '../components/war-room.js'
 
 export function renderPreScreen() {
   return `
@@ -23,20 +24,21 @@ export function renderPreScreen() {
               <input class="wl-input" id="wl-email" type="email" placeholder="ton@email.com">
               <button class="wl-btn" id="wl-btn">ME PRÉVENIR →</button>
             </div>
-            <div class="wl-done" id="wl-done">✓ &nbsp;Noté. On te ping le 14.03 à 20h00 pile.</div>
+            <div class="wl-done" id="wl-done">✓ &nbsp;Noté. On te ping au lancement.</div>
             <div class="wl-count-line" id="wl-cnt">chargement...</div>
           </div>
         </div>
       </div>
 
+      ${renderWarRoom()}
+
       <div class="rules-wrap">
         <div class="rules-h">Les règles.<br><span>Simples. Brutales.</span></div>
         <div class="rules-intro">Pas de bullshit. Voilà exactement comment ça marche.</div>
-
         ${rule(1, "T'inscris. Tu reçois un lien unique.", "Dès que tu crées ta pyramide, tu as un lien de parrainage personnel. <strong>C'est ton seul outil.</strong>")}
         ${rule(2, "Chaque personne via ton lien = +1 membre.", "Leurs recrues comptent aussi. En cascade. <strong>Infinie.</strong> Plus ta pyramide est profonde, plus tu es fort.")}
         ${rule(3, "Tu vois pas les autres pyramides. Juste le classement.", "T'as ton dashboard perso. Tu vois tes membres, ton rang, l'écart avec le leader. <strong>Rien d'autre.</strong>")}
-        ${rule(4, "72H. Timer visible. Fin le 17 mars 20h.", "Le round dure exactement <strong>72 heures.</strong> Quand ça ralentit, le timer accélère.")}
+        ${rule(4, "72H. Timer visible.", "Le round dure exactement <strong>72 heures.</strong> Quand ça ralentit, le timer accélère.")}
         ${rule(5, "Le winner prend TOUT LE SITE.", "La pyramide avec le plus de membres gagne. <strong>Son nom. Son projet. Ses réseaux.</strong> Affichés à tous. Chaque membre = un bloc. Cliquable.")}
         ${rule(6, "Hall of fame. Pour toujours.", "Les anciens winners restent sur le site. <strong>Immortalisés.</strong> Nouveau round. Nouvelle guerre.")}
       </div>
@@ -58,8 +60,8 @@ export function renderPreScreen() {
 
       <footer class="site-footer">
         <span>YESITSPONZI © 2026</span>
-        <span>START 14.03 20:00 → END 17.03 20:00</span>
         <span>ZÉRO ARGENT. 100% FIERTÉ.</span>
+        <span>ROUND 1 À VENIR</span>
       </footer>
     </div>
   `
@@ -78,7 +80,6 @@ function rule(n, title, desc) {
 }
 
 export function initPreScreen() {
-  // Countdown
   startTimer((phase, parts) => {
     if (phase === 'pre' && parts) {
       const el = document.getElementById('pre-countdown')
@@ -86,23 +87,21 @@ export function initPreScreen() {
     }
   })
 
-  // Waitlist button
   document.getElementById('wl-btn')?.addEventListener('click', submitWaitlist)
   document.getElementById('wl-email')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') submitWaitlist()
   })
 
   loadWLCount()
+  initWarRoom()
 }
 
 async function submitWaitlist() {
   const email = document.getElementById('wl-email')?.value.trim()
   if (!email || !email.includes('@')) return toast('Email valide svp !')
-
   const { error } = await Waitlist.add(email)
   if (error?.code === '23505') return toast("T'es déjà sur la liste !")
   if (error) return toast('Erreur, réessaie.')
-
   document.getElementById('wl-done').style.display = 'block'
   document.querySelector('.wl-flex').style.display = 'none'
   loadWLCount()
