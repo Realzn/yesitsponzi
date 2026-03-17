@@ -31,15 +31,11 @@ async function bootstrap() {
   document.getElementById('logo').addEventListener('click', goHome)
 
   // 2. Load all data
-  const [pyrRes, memRes, msgRes] = await Promise.all([
+  const [pyrRes, memRes, allMsgRes] = await Promise.all([
     Pyramids.getAll(),
     Members.getAll(),
-    Messages.getByPyramid(null), // we'll filter client-side
+    sb.from('messages').select('*').order('created_at', { ascending: true }),
   ])
-
-  // Handle messages differently — getByPyramid needs an ID
-  // so we get all messages
-  const allMsgRes = await sb.from('messages').select('*').order('created_at', { ascending: true })
 
   store.setAll({
     pyramids: pyrRes.data  || [],
