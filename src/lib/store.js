@@ -1,16 +1,14 @@
 // ── Minimal reactive store ──────────────────────────────────
-// Simple pub/sub — no framework needed
-
 const listeners = {}
 
 export const store = {
   state: {
-    pyramids: [],
-    members: [],
-    messages: [],
-    memberCounts: {},   // { [pyramidId]: number }
-    myPyramid: null,    // pyramid object if user created one
-    myPyramidId: null,  // from localStorage
+    pyramids:     [],
+    members:      [],
+    messages:     [],
+    memberCounts: {},
+    myPyramid:    null,
+    myPyramidId:  null,
   },
 
   on(event, cb) {
@@ -19,14 +17,18 @@ export const store = {
     return () => { listeners[event] = listeners[event].filter(l => l !== cb) }
   },
 
+  // Clear all listeners — call before every screen change to avoid duplicates
+  clearListeners() {
+    Object.keys(listeners).forEach(k => { listeners[k] = [] })
+  },
+
   emit(event, data) {
     listeners[event]?.forEach(cb => cb(data))
   },
 
-  // ── Mutations ──────────────────────────────────────────────
   setAll({ pyramids, members, messages }) {
     this.state.pyramids = pyramids
-    this.state.members = members
+    this.state.members  = members
     this.state.messages = messages
     this.rebuildCounts()
     this.emit('ready')
@@ -59,12 +61,11 @@ export const store = {
   },
 
   setMyPyramid(p) {
-    this.state.myPyramid = p
+    this.state.myPyramid   = p
     this.state.myPyramidId = p.id
     this.emit('my:pyramid', p)
   },
 
-  // ── Computed ───────────────────────────────────────────────
   rebuildCounts() {
     this.state.memberCounts = {}
     this.state.members.forEach(m => {
@@ -78,13 +79,8 @@ export const store = {
     )
   },
 
-  getMyMembers() {
-    return this.state.members.filter(m => m.pyramid_id === this.state.myPyramidId)
-  },
-
-  getMyMessages() {
-    return this.state.messages.filter(m => m.pyramid_id === this.state.myPyramidId)
-  },
+  getMyMembers()  { return this.state.members.filter(m => m.pyramid_id === this.state.myPyramidId) },
+  getMyMessages() { return this.state.messages.filter(m => m.pyramid_id === this.state.myPyramidId) },
 
   getMyRank() {
     const sorted = this.getSorted()
@@ -92,7 +88,6 @@ export const store = {
   },
 
   getLeader() {
-    const sorted = this.getSorted()
-    return sorted[0] || null
+    return this.getSorted()[0] || null
   },
 }

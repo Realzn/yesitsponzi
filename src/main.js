@@ -18,13 +18,12 @@ let currentUser = null
 async function bootstrap() {
   const app = document.getElementById('app')
 
-  // Shell
   app.innerHTML = `
     ${renderTicker()}
     <header id="site-header">
       <div class="logo" id="logo">YES<em>ITS</em>PONZI</div>
       <div class="hdr-right">
-        <div class="badge badge-pre" id="hdr-badge">⬤ &nbsp;PRE-LAUNCH</div>
+        <div class="badge badge-pre" id="hdr-badge">⬤ &nbsp;CHARGEMENT</div>
         <div id="hdr-timer"></div>
         <div id="hdr-auth"></div>
       </div>
@@ -37,11 +36,8 @@ async function bootstrap() {
 
   document.getElementById('logo').addEventListener('click', () => route())
 
-  // Auth modal init
-  initAuthModal(() => {
-    refreshAuthButton()
-    route()
-  })
+  // Auth modal
+  initAuthModal(() => { refreshAuthButton(); route() })
 
   // Auth state listener
   Auth.onAuthChange((_event, session) => {
@@ -50,11 +46,10 @@ async function bootstrap() {
     route()
   })
 
-  // Load current user
   currentUser = await getCurrentUser()
   refreshAuthButton()
 
-  // Load data
+  // Load all data in parallel
   const [pyrRes, memRes, allMsgRes] = await Promise.all([
     Pyramids.getAll(),
     Members.getAll(),
@@ -67,7 +62,7 @@ async function bootstrap() {
     messages:  allMsgRes.data || [],
   })
 
-  // Restore local pyramid session
+  // Restore session
   const savedPid = localStorage.getItem(LS_PID)
   if (savedPid) {
     const p = store.state.pyramids.find(x => x.id === savedPid)
@@ -97,17 +92,18 @@ function refreshAuthButton() {
         <button class="hdr-logout" id="hdr-logout">Déco</button>
       </div>
     `
-    document.getElementById('hdr-logout').addEventListener('click', async () => {
+    document.getElementById('hdr-logout')?.addEventListener('click', async () => {
       await Auth.signOut()
       localStorage.removeItem(LS_PID)
-      store.state.myPyramid = null
+      store.state.myPyramid   = null
       store.state.myPyramidId = null
+      currentUser = null
+      refreshAuthButton()
+      route()
     })
   } else {
-    el.innerHTML = `
-      <button class="hdr-login-btn" id="hdr-login">CONNEXION</button>
-    `
-    document.getElementById('hdr-login').addEventListener('click', () => openAuthModal('signin'))
+    el.innerHTML = `<button class="hdr-login-btn" id="hdr-login">CONNEXION</button>`
+    document.getElementById('hdr-login')?.addEventListener('click', () => openAuthModal('signin'))
   }
 }
 
@@ -117,15 +113,14 @@ function route() {
   const screens = document.getElementById('screens')
   if (!screens) return
 
+  // Clear store listeners before injecting new screen
+  store.clearListeners()
+
   // Admin
   if (currentUser && isAdmin(currentUser)) {
     setBadge('live')
     screens.innerHTML = renderAdminScreen()
-    initAdminScreen(() => {
-      currentUser = null
-      refreshAuthButton()
-      route()
-    })
+    initAdminScreen(() => { currentUser = null; refreshAuthButton(); route() })
     return
   }
 
@@ -137,7 +132,7 @@ function route() {
     return
   }
 
-  // Winner
+  // Round finished → winner showcase
   if (now > ROUND_END.getTime()) {
     setBadge('done')
     screens.innerHTML = renderWinnerScreen()
@@ -154,6 +149,7 @@ function route() {
   } else {
     screens.innerHTML = renderLiveScreen()
     initLiveScreen(pyramid => {
+      store.clearListeners()
       store.setMyPyramid(pyramid)
       screens.innerHTML = renderDashboard()
       initDashboard()

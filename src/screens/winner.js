@@ -3,7 +3,7 @@ import { store } from '../lib/store.js'
 
 export function renderWinnerScreen() {
   return `
-    <div id="screen-winner" class="screen">
+    <div id="screen-winner" class="screen active">
 
       <!-- Floating crown header -->
       <div class="mural-header">

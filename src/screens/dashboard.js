@@ -11,7 +11,7 @@ let unreadMembers = 0
 
 export function renderDashboard() {
   return `
-    <div id="screen-dashboard" class="screen">
+    <div id="screen-dashboard" class="screen active">
       <div class="dash-side">
         <div class="ds-profile">
           <div class="ds-ava" id="ds-ava">🔺</div>

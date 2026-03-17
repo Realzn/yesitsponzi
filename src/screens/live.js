@@ -3,12 +3,13 @@ import { store } from '../lib/store.js'
 import { toast, pad } from '../lib/utils.js'
 import { startTimer, urgencyMessage } from '../components/timer.js'
 import { EMOJIS, LS_PID, BASE_URL } from '../lib/config.js'
+import { renderWarRoom, initWarRoom } from '../components/war-room.js'
 
 let selEmoji = '🔺'
 
 export function renderLiveScreen() {
   return `
-    <div id="screen-live" class="screen">
+    <div id="screen-live" class="screen active">
 
       <div class="live-top">
         <div class="leader-panel">
@@ -63,6 +64,14 @@ export function renderLiveScreen() {
           <button class="cta-btn" id="create-btn">LANCER MA PYRAMIDE 🔺</button>
         </div>
       </div>
+
+      ${renderWarRoom()}
+
+      <footer class="site-footer">
+        <span>YESITSPONZI © 2026</span>
+        <span>ROUND 1 LIVE</span>
+        <span>ZÉRO ARGENT. 100% FIERTÉ.</span>
+      </footer>
     </div>
   `
 }
@@ -71,15 +80,15 @@ export function initLiveScreen(onPyramidCreated) {
   // Live timer
   startTimer((phase, parts) => {
     if (phase !== 'live' || !parts) return
-    const el = (id) => document.getElementById(id)
-    el('t-h').textContent = pad(parts.hours)
-    el('t-m').textContent = pad(parts.mins)
-    el('t-s').textContent = pad(parts.secs)
-    el('hdr-timer').textContent = `FIN ${pad(parts.hours)}h${pad(parts.mins)}m${pad(parts.secs)}s`
-    el('urgency').textContent = urgencyMessage(parts)
+    const el = id => document.getElementById(id)
+    if (el('t-h')) el('t-h').textContent = pad(parts.hours)
+    if (el('t-m')) el('t-m').textContent = pad(parts.mins)
+    if (el('t-s')) el('t-s').textContent = pad(parts.secs)
+    if (el('hdr-timer')) el('hdr-timer').textContent = `FIN ${pad(parts.hours)}h${pad(parts.mins)}m${pad(parts.secs)}s`
+    if (el('urgency')) el('urgency').textContent = urgencyMessage(parts)
   })
 
-  // Leader update
+  // Leader panel
   store.on('members:update', updateLeaderPanel)
   store.on('pyramids:update', updateLeaderPanel)
   updateLeaderPanel()
@@ -96,7 +105,10 @@ export function initLiveScreen(onPyramidCreated) {
   // Create button
   document.getElementById('create-btn')?.addEventListener('click', () => createPyramid(onPyramidCreated))
 
-  // Check referral param
+  // War room
+  initWarRoom()
+
+  // Referral param
   handleRefJoin()
 }
 
@@ -104,16 +116,19 @@ function updateLeaderPanel() {
   const leader = store.getLeader()
   if (!leader) return
   const cnt = store.state.memberCounts[leader.id] || 0
-  document.getElementById('ldr-name').textContent = leader.name || leader.pseudo || '—'
-  document.getElementById('ldr-cnt').innerHTML = `<strong>${cnt}</strong> membres`
-  document.getElementById('ldr-bar').style.width = Math.min(100, cnt * 4) + '%'
+  const n = document.getElementById('ldr-name')
+  const c = document.getElementById('ldr-cnt')
+  const b = document.getElementById('ldr-bar')
+  if (n) n.textContent = leader.name || leader.pseudo || '—'
+  if (c) c.innerHTML = `<strong>${cnt}</strong> membres`
+  if (b) b.style.width = Math.min(100, cnt * 4) + '%'
 }
 
 async function createPyramid(onCreated) {
-  const pseudo = document.getElementById('f-pseudo').value.trim()
-  const name   = document.getElementById('f-name').value.trim()
-  const promo  = document.getElementById('f-promo').value.trim()
-  const link   = document.getElementById('f-link').value.trim()
+  const pseudo = document.getElementById('f-pseudo')?.value.trim()
+  const name   = document.getElementById('f-name')?.value.trim()
+  const promo  = document.getElementById('f-promo')?.value.trim()
+  const link   = document.getElementById('f-link')?.value.trim()
 
   if (!pseudo || !name) return toast('Pseudo + nom requis !')
 
@@ -135,13 +150,10 @@ async function createPyramid(onCreated) {
   onCreated(data)
 }
 
-// ── Referral join via ?ref=xxx ─────────────────────────────
 function handleRefJoin() {
-  const params = new URLSearchParams(window.location.search)
-  const ref = params.get('ref')
+  const ref = new URLSearchParams(window.location.search).get('ref')
   if (!ref) return
 
-  // Wait for store to be ready
   setTimeout(() => {
     const pyramid = store.state.pyramids.find(p => p.id === ref)
     if (!pyramid) return
@@ -152,13 +164,11 @@ function handleRefJoin() {
     const promo = prompt('Ce que tu veux promouvoir (optionnel) :') || ''
     const link  = prompt('Ton lien Instagram/site (optionnel) :') || ''
 
-    joinPyramid(ref, pseudo.trim(), promo, link)
+    Members.create({ pyramid_id: ref, pseudo: pseudo.trim(), promo, link, emoji: '👤' })
+      .then(({ error }) => {
+        if (error) return toast('Erreur: ' + error.message)
+        toast('🔺 T\'es dans la pyramide !')
+        window.history.replaceState({}, '', BASE_URL)
+      })
   }, 800)
-}
-
-async function joinPyramid(pid, pseudo, promo, link) {
-  const { error } = await Members.create({ pyramid_id: pid, pseudo, promo, link, emoji: '👤' })
-  if (error) return toast('Erreur: ' + error.message)
-  toast('🔺 T\'es dans la pyramide !')
-  window.history.replaceState({}, '', BASE_URL)
 }
