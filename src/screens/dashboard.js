@@ -14,7 +14,8 @@ export function renderDashboard() {
     <div id="screen-dashboard" class="screen active">
       <div class="dash-side">
         <div class="ds-profile">
-          <div class="ds-ava" id="ds-ava">🔺</div>
+          <div class="ds-avatar-ring" id="ds-ava-ring"><span id="ds-ava">🦅</span></div>
+          <div class="ds-status">STATUT : <em>INITIÉ</em></div>
           <div class="ds-pname" id="ds-pname">—</div>
           <div class="ds-ppromo" id="ds-ppromo">—</div>
           <div class="ds-big" id="ds-cnt">0</div>
@@ -31,7 +32,7 @@ export function renderDashboard() {
             💬 &nbsp;Chat
             <span class="dn-badge" id="badge-chat" style="display:none">0</span>
           </div>
-          <div class="dn-item" data-tab="stats">📊 &nbsp;Classement</div>
+          <div class="dn-item" data-tab="stats"><span class="dn-icon">𓂀</span>Classement</div>
         </nav>
 
         <div class="dash-ref">
