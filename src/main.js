@@ -165,3 +165,24 @@ bootstrap().catch(err => {
       <small>Vérifie la console (F12) pour plus de détails.</small>
     </div>`
 })
+
+// ── DUST PARTICLES ────────────────────────────────────────
+function injectDustParticles() {
+  const field = document.createElement('div')
+  field.className = 'dust-field'
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div')
+    p.className = 'dust-particle'
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      width: ${Math.random() > .7 ? 3 : 2}px;
+      height: ${Math.random() > .7 ? 3 : 2}px;
+      animation-duration: ${8 + Math.random() * 14}s;
+      animation-delay: ${Math.random() * 10}s;
+      opacity: 0;
+    `
+    field.appendChild(p)
+  }
+  document.body.appendChild(field)
+}
+injectDustParticles()
