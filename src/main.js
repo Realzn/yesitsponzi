@@ -60,7 +60,7 @@ async function bootstrap() {
     Pyramids.getAll(),
     Members.getAll(),
     sb.from('messages').select('*, profiles(pseudo,avatar)').order('created_at', { ascending: true }),
-    sb.from('applications').select('*, profiles!applicant_id(pseudo,avatar,promo,link), pyramids!target_pyramid(id,name,emoji)').order('created_at', { ascending: false }),
+    sb.from('applications').select('*').order('created_at', { ascending: false }),
   ])
 
   store.setAll({
