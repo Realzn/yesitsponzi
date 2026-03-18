@@ -1,4 +1,4 @@
-import { sb, Pyramids, Members, subscribeAll } from './lib/supabase.js'
+import { sb, Pyramids, Members, subscribeAll, Profiles, Applications } from './lib/supabase.js'
 import { store } from './lib/store.js'
 import { ROUND_LAUNCH, ROUND_END, LS_PID } from './lib/config.js'
 import { Auth, getCurrentUser, isAdmin } from './lib/auth.js'
@@ -14,16 +14,14 @@ import { renderAdminScreen,  initAdminScreen  } from './screens/admin.js'
 
 let currentUser = null
 
-// ── Bootstrap ──────────────────────────────────────────────
 async function bootstrap() {
   const app = document.getElementById('app')
-
   app.innerHTML = `
     ${renderTicker()}
     <header id="site-header">
       <div class="logo" id="logo">YES<em>ITS</em>PONZI</div>
       <div class="hdr-right">
-        <div class="badge badge-pre" id="hdr-badge">⬤ &nbsp;CHARGEMENT</div>
+        <div class="badge badge-pre" id="hdr-badge">⬤ CHARGEMENT</div>
         <div id="hdr-timer"></div>
         <div id="hdr-auth"></div>
       </div>
@@ -37,23 +35,32 @@ async function bootstrap() {
   document.getElementById('logo').addEventListener('click', () => route())
 
   // Auth modal
-  initAuthModal(() => { refreshAuthButton(); route() })
+  initAuthModal(async () => {
+    const { data: { user } } = await sb.auth.getUser()
+    currentUser = user
+    if (currentUser) await loadProfile()
+    refreshAuthButton()
+    route()
+  })
 
-  // Auth state listener
-  Auth.onAuthChange((_event, session) => {
+  // Auth state
+  Auth.onAuthChange(async (_event, session) => {
     currentUser = session?.user || null
+    if (currentUser) await loadProfile()
     refreshAuthButton()
     route()
   })
 
   currentUser = await getCurrentUser()
+  if (currentUser) await loadProfile()
   refreshAuthButton()
 
-  // Load all data in parallel
-  const [pyrRes, memRes, allMsgRes] = await Promise.all([
+  // Load all data
+  const [pyrRes, memRes, allMsgRes, allAppRes] = await Promise.all([
     Pyramids.getAll(),
     Members.getAll(),
-    sb.from('messages').select('*').order('created_at', { ascending: true }),
+    sb.from('messages').select('*, profiles(pseudo,avatar)').order('created_at', { ascending: true }),
+    sb.from('applications').select('*, profiles!applicant_id(pseudo,avatar,promo,link), pyramids!target_pyramid(id,name,emoji)').order('created_at', { ascending: false }),
   ])
 
   store.setAll({
@@ -61,6 +68,7 @@ async function bootstrap() {
     members:   memRes.data    || [],
     messages:  allMsgRes.data || [],
   })
+  store.state.applications = allAppRes.data || []
 
   // Restore session
   const savedPid = localStorage.getItem(LS_PID)
@@ -69,54 +77,66 @@ async function bootstrap() {
     if (p) store.setMyPyramid(p)
   }
 
+  // If logged in, try to find their pyramid
+  if (currentUser && !store.state.myPyramidId) {
+    const m = store.state.members.find(x => x.user_id === currentUser.id && x.status === 'active')
+    if (m) {
+      const p = store.state.pyramids.find(x => x.id === m.pyramid_id)
+      if (p) { store.setMyPyramid(p); localStorage.setItem(LS_PID, p.id) }
+      store.setMyMembership(m)
+    }
+  }
+
   // Realtime
   subscribeAll({
-    onPyramid: p   => store.addPyramid(p),
-    onMember:  m   => store.addMember(m),
-    onMessage: msg => store.addMessage(msg),
+    onPyramid:     p          => store.addPyramid(p),
+    onMember:      (m, type)  => store.addMember(m, type),
+    onMessage:     msg        => store.addMessage(msg),
+    onApplication: (app, type) => store.addApplication(app, type),
   })
 
   route()
+  injectDust()
 }
 
-// ── Auth button ────────────────────────────────────────────
+async function loadProfile() {
+  if (!currentUser) return
+  const { data } = await Profiles.get(currentUser.id)
+  if (data) store.setMyProfile(data)
+}
+
 function refreshAuthButton() {
   const el = document.getElementById('hdr-auth')
   if (!el) return
   if (currentUser) {
-    const pseudo = currentUser.user_metadata?.pseudo || currentUser.email?.split('@')[0] || 'moi'
+    const pseudo = store.state.myProfile?.pseudo || currentUser.user_metadata?.pseudo || currentUser.email?.split('@')[0]
     el.innerHTML = `
       <div class="hdr-user">
         <span class="hdr-pseudo">${pseudo}</span>
         ${isAdmin(currentUser) ? '<span class="hdr-admin-tag">ADMIN</span>' : ''}
-        <button class="hdr-logout" id="hdr-logout">Déco</button>
+        <button class="hdr-logout" onclick="doLogout()">Déco</button>
       </div>
     `
-    document.getElementById('hdr-logout')?.addEventListener('click', async () => {
+    window.doLogout = async () => {
       await Auth.signOut()
       localStorage.removeItem(LS_PID)
-      store.state.myPyramid   = null
-      store.state.myPyramidId = null
-      currentUser = null
-      refreshAuthButton()
-      route()
-    })
+      store.state.myPyramid = null; store.state.myPyramidId = null
+      store.state.myProfile = null; store.state.myMembership = null
+      currentUser = null; refreshAuthButton(); route()
+    }
   } else {
-    el.innerHTML = `<button class="hdr-login-btn" id="hdr-login">CONNEXION</button>`
-    document.getElementById('hdr-login')?.addEventListener('click', () => openAuthModal('signin'))
+    el.innerHTML = `<button class="hdr-login-btn" onclick="openAuthModal('signin')">CONNEXION</button>`
+    window.openAuthModal = openAuthModal
   }
 }
 
-// ── Routing ────────────────────────────────────────────────
 function route() {
   const now     = Date.now()
   const screens = document.getElementById('screens')
   if (!screens) return
 
-  // Clear store listeners before injecting new screen
   store.clearListeners()
 
-  // Admin
   if (currentUser && isAdmin(currentUser)) {
     setBadge('live')
     screens.innerHTML = renderAdminScreen()
@@ -124,15 +144,13 @@ function route() {
     return
   }
 
-  // Pre-launch
   if (now < ROUND_LAUNCH.getTime()) {
     setBadge('pre')
     screens.innerHTML = renderPreScreen()
-    initPreScreen()
+    initPreScreen(() => openAuthModal('signup'))
     return
   }
 
-  // Round finished → winner showcase
   if (now > ROUND_END.getTime()) {
     setBadge('done')
     screens.innerHTML = renderWinnerScreen()
@@ -140,7 +158,6 @@ function route() {
     return
   }
 
-  // Live round
   setBadge('live')
 
   if (store.state.myPyramid) {
@@ -157,32 +174,20 @@ function route() {
   }
 }
 
-bootstrap().catch(err => {
-  console.error('[YESITSPONZI]', err)
-  document.getElementById('app').innerHTML =
-    `<div style="padding:2rem;font-family:monospace;color:#ff2020;background:#000">
-      <strong>Erreur JS :</strong> ${err.message}<br>
-      <small>Vérifie la console (F12) pour plus de détails.</small>
-    </div>`
-})
-
-// ── DUST PARTICLES ────────────────────────────────────────
-function injectDustParticles() {
+function injectDust() {
   const field = document.createElement('div')
   field.className = 'dust-field'
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 16; i++) {
     const p = document.createElement('div')
     p.className = 'dust-particle'
-    p.style.cssText = `
-      left: ${Math.random() * 100}%;
-      width: ${Math.random() > .7 ? 3 : 2}px;
-      height: ${Math.random() > .7 ? 3 : 2}px;
-      animation-duration: ${8 + Math.random() * 14}s;
-      animation-delay: ${Math.random() * 10}s;
-      opacity: 0;
-    `
+    p.style.cssText = `left:${Math.random()*100}%;width:${Math.random()>.7?3:2}px;height:${Math.random()>.7?3:2}px;animation-duration:${9+Math.random()*14}s;animation-delay:${Math.random()*10}s;opacity:0`
     field.appendChild(p)
   }
   document.body.appendChild(field)
 }
-injectDustParticles()
+
+bootstrap().catch(err => {
+  console.error('[YESITSPONZI]', err)
+  document.getElementById('app').innerHTML =
+    `<div style="padding:2rem;font-family:monospace;color:#C04030;background:#030303">Erreur: ${err.message}</div>`
+})

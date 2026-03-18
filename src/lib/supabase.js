@@ -3,45 +3,74 @@ import { createClient } from '@supabase/supabase-js'
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!url || !key) {
-  console.error('[YESITSPONZI] Missing Supabase env vars. Check .env')
-}
-
 export const sb = createClient(url, key, {
   realtime: { params: { eventsPerSecond: 10 } }
 })
 
-// ── Pyramides ───────────────────────────────────────────────
+// ── Pyramids ─────────────────────────────────────────────────
 export const Pyramids = {
-  getAll: () => sb.from('pyramids').select('*').order('created_at', { ascending: true }),
-  create: (data) => sb.from('pyramids').insert(data).select().single(),
-  getById: (id) => sb.from('pyramids').select('*').eq('id', id).single(),
+  getAll:   ()   => sb.from('pyramids').select('*, profiles!creator_id(pseudo,avatar)').order('created_at', { ascending: true }),
+  create:   (d)  => sb.from('pyramids').insert(d).select().single(),
+  getById:  (id) => sb.from('pyramids').select('*').eq('id', id).single(),
+  getLeaderboard: () => sb.from('pyramids').select(`
+    *, profiles!creator_id(pseudo,avatar),
+    members(count)
+  `).eq('members.status', 'active').order('created_at', { ascending: true }),
 }
 
-// ── Members ─────────────────────────────────────────────────
+// ── Members ──────────────────────────────────────────────────
 export const Members = {
-  getAll: () => sb.from('members').select('*').order('joined_at', { ascending: true }),
-  getByPyramid: (pid) => sb.from('members').select('*').eq('pyramid_id', pid).order('joined_at', { ascending: true }),
-  create: (data) => sb.from('members').insert(data).select().single(),
+  getAll:      ()    => sb.from('members').select('*').eq('status', 'active').order('joined_at', { ascending: true }),
+  getByPyramid:(pid) => sb.from('members').select('*, profiles(pseudo,avatar,link)').eq('pyramid_id', pid).eq('status', 'active').order('joined_at', { ascending: true }),
+  create:      (d)   => sb.from('members').insert(d).select().single(),
+  getTree:     (pid) => sb.rpc('get_pyramid_tree', { p_pyramid_id: pid }),
+  joinRpc:     (d)   => sb.rpc('join_pyramid', d),
+  leaveRpc:    (userId, pyramidId) => sb.rpc('leave_pyramid', { p_user_id: userId, p_pyramid_id: pyramidId }),
+  getUserMembership: (uid) => sb.from('members').select('*, pyramids(id,name,emoji)').eq('user_id', uid).eq('status', 'active').single(),
 }
 
 // ── Messages ─────────────────────────────────────────────────
 export const Messages = {
-  getByPyramid: (pid) => sb.from('messages').select('*').eq('pyramid_id', pid).order('created_at', { ascending: true }),
-  create: (data) => sb.from('messages').insert(data).select().single(),
+  getByPyramid: (pid) => sb.from('messages').select('*, profiles(pseudo,avatar)').eq('pyramid_id', pid).order('created_at', { ascending: true }),
+  create: (d) => sb.from('messages').insert(d).select().single(),
 }
 
-// ── Waitlist ─────────────────────────────────────────────────
+// ── Applications ─────────────────────────────────────────────
+export const Applications = {
+  create:           (d)   => sb.from('applications').insert(d).select().single(),
+  getForPyramid:    (pid) => sb.from('applications').select('*, profiles!applicant_id(pseudo,avatar,promo,link)').eq('target_pyramid', pid).eq('status', 'pending').order('created_at', { ascending: false }),
+  getByApplicant:   (uid) => sb.from('applications').select('*, pyramids!target_pyramid(id,name,emoji)').eq('applicant_id', uid).order('created_at', { ascending: false }),
+  accept: async (appId, app) => {
+    await sb.from('applications').update({ status: 'accepted' }).eq('id', appId)
+    if (app.from_pyramid) await sb.rpc('leave_pyramid', { p_user_id: app.applicant_id, p_pyramid_id: app.from_pyramid })
+    return sb.rpc('join_pyramid', {
+      p_user_id: app.applicant_id, p_pyramid_id: app.target_pyramid,
+      p_pseudo: app.profiles?.pseudo || 'Initié', p_emoji: '👤'
+    })
+  },
+  refuse: (appId) => sb.from('applications').update({ status: 'refused' }).eq('id', appId),
+}
+
+// ── Profiles ─────────────────────────────────────────────────
+export const Profiles = {
+  get:    (uid) => sb.from('profiles').select('*').eq('id', uid).single(),
+  upsert: (d)   => sb.from('profiles').upsert(d),
+}
+
+// ── Waitlist ──────────────────────────────────────────────────
 export const Waitlist = {
-  add: (email) => sb.from('waitlist').insert({ email }),
-  count: () => sb.from('waitlist').select('*', { count: 'exact', head: true }),
+  add:   (email) => sb.from('waitlist').insert({ email }),
+  count: ()      => sb.from('waitlist').select('*', { count: 'exact', head: true }),
 }
 
-// ── Realtime subscriptions ───────────────────────────────────
-export function subscribeAll({ onPyramid, onMember, onMessage }) {
+// ── Realtime ──────────────────────────────────────────────────
+export function subscribeAll({ onPyramid, onMember, onMessage, onApplication }) {
   return sb.channel('yip-global')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pyramids' }, ({ new: n }) => onPyramid?.(n))
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'members' },  ({ new: n }) => onMember?.(n))
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: n }) => onMessage?.(n))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pyramids' },     ({ new: n }) => onPyramid?.(n))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'members' },      ({ new: n }) => onMember?.(n))
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'members' },      ({ new: n }) => onMember?.(n, 'update'))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' },     ({ new: n }) => onMessage?.(n))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'applications' }, ({ new: n }) => onApplication?.(n))
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'applications' }, ({ new: n }) => onApplication?.(n, 'update'))
     .subscribe()
 }
